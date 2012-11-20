@@ -1,0 +1,887 @@
+>import Graphics.Implicit
+>import Graphics.Implicit.Primitives
+>import Data.NumInstances
+>import Control.Concurrent.MVar
+>import Control.Concurrent
+
+Lower res == better quality:
+
+>res = 0.8
+
+>outerChassiBottomStlFileName = "Chassi-Bottom-Outer.stl"
+
+>innerChassiBottomStlFileName = "Chassi-Bottom-Inner.stl"
+
+
+>chassiTopStlFileName = "Chassi-Top.stl"
+
+>{-outerChassiStlFile
+> outerChassiBottomStlFileName
+> outerChassiBottom
+> res
+>  <<
+> writeSTL
+>  res
+>  outerChassiBottomStlFileName
+>  outerChassiBottom
+
+>innerChassiStlFile
+> innerChassiBottomStlFileName
+> innerChassiBottom
+> res
+>  <<
+> writeSTL
+>  res
+>  innerChassiBottomStlFileName
+>  innerChassiBottom-}
+
+>chassiTopStlFile
+> chassiTopStlFileName
+> chassiTop
+> res
+>  <<
+> writeSTL
+>  res
+>  chassiTopStlFileName
+>  chassiTop
+
+The main body.
+
+>chassiBottom
+> rodHoles
+> boxHoles
+> chassiBottomHeight
+> chassiLength
+> chassiWidth
+>  =
+> difference $
+>  rect3R 0 (0,0,0)
+>   (chassiLength,
+>    chassiWidth,
+>    chassiBottomHeight) : []
+>  ++ rodHoles
+>  ++ boxHoles
+
+>outerChassiBottom
+> chassiBottom
+> outerElectricScrewHoles
+> outerSolenoidWireHoles
+> nutHoles
+> groundWireCavities
+>  =
+> difference
+>  $ chassiBottom :
+>  outerElectricScrewHoles
+>  ++ nutHoles
+>  ++ outerSolenoidWireHoles
+>  ++ groundWireCavities
+
+>innerChassiBottom
+> chassiBottom
+> innerElectricScrewHoles
+> innerSolenoidWireHoles
+> nutHoles
+> groundWireCavities
+> innerWiresFromNuts
+>  =
+> difference
+>  $ chassiBottom :
+>  innerElectricScrewHoles
+>  ++ nutHoles
+>  ++ innerWiresFromNuts
+>  ++ innerSolenoidWireHoles
+>  ++ groundWireCavities
+
+>chassiTop
+> chassiTopHeight
+> chassiLength
+> chassiWidth
+> pinHoles
+> boxHolesTop
+>  =
+> difference $
+>  rect3R 0 (0,0,0)
+>   (chassiLength,
+>    chassiWidth,
+>    chassiTopHeight) : []
+>  ++ pinHoles
+>  ++ boxHolesTop
+
+>chassiLength
+> boxesHoleLength
+> wallThickness
+>  =
+> boxesHoleLength + 2*wallThickness
+
+>chassiWidth
+> boxesHoleWidth
+> wallThickness
+>  =
+> boxesHoleWidth + 2*wallThickness
+
+>numSolenoids = 4
+
+>wallThickness = 5
+
+>lengthWiseHoleSpacing
+> boxLength
+>  =
+> boxLength
+
+>chassiBottomHeight = 31
+
+>chassiTopHeight = 26.83
+
+>boxHoleTopHeight = 19
+
+>boxHoleTopRise
+> chassiTopHeight
+> boxHoleTopHeight
+>  =
+> chassiTopHeight-boxHoleTopHeight
+
+>baseThickness=4
+
+Holes for solenoid boxes.
+
+>boxesHoleWidth
+> boxHoleWidth
+>   =
+> boxHoleWidth
+
+>boxesHoleLength
+> numSolenoids
+> boxHoleLength
+>   =
+> numSolenoids*boxHoleLength
+
+>boxHoleLength
+> boxLength
+>  =
+> boxLength + 0.7
+
+>boxLength = 19.35
+
+>boxHoleWidth
+> boxWidth
+>  =
+> boxWidth + 1
+
+>boxWidth = 17.4
+
+>boxHoleWidthWithWires = 20
+
+>boxHoleBottomCenters
+> boxHoleBottomCenter
+> rodHoleBottomCenters
+>  =
+> map
+>  boxHoleBottomCenter
+>  rodHoleBottomCenters
+
+>boxHole
+> boxHoleLength
+> boxHoleWidth
+> boxHoleHeight
+>   \
+> thisBoxHoleBottomCenter
+>  =
+> translate
+>  (thisBoxHoleBottomCenter-
+>   (boxHoleLength/2,
+>    boxHoleWidth/2,
+>    0))
+>   (rect3R
+>     0
+>     (0,0,0)
+>     (boxHoleLength,
+>      boxHoleWidth,
+>      boxHoleHeight))
+
+>boxHoleHeight
+> chassiBottomHeight
+> rodHoleDepth
+> baseThickness
+>  =
+> chassiBottomHeight -
+> rodHoleDepth -
+> baseThickness
+
+>boxHoles
+> boxHole
+> boxHoleBottomCenters
+>  =
+> map
+>  boxHole
+>  boxHoleBottomCenters
+
+>boxHolesTop
+> boxHoleTop
+> boxHoleBottomCenters
+>  =
+> map
+>  boxHoleTop
+>  boxHoleBottomCenters
+
+>boxHoleTop
+> boxHoleLength
+> boxHoleWidthWithWires
+> boxHoleWidth
+> boxHoleTopHeight
+> boxHoleTopRise
+>   \
+> thisBoxHoleBottomCenter
+>  =
+> translate
+>  ((thisBoxHoleBottomCenter*
+>   (1,1,0))-
+>   (boxHoleLength/2,
+
+Yes,
+we do want this to be off center,
+since the extra room for the wires
+is put off to one side.
+
+>    boxHoleWidth/2,
+>    -boxHoleTopRise))
+>   (rect3R
+>     0
+>     (0,0,0)
+>     (boxHoleLength,
+>      boxHoleWidthWithWires,
+>      boxHoleTopHeight))
+
+Rod holes.
+
+>rodHoleBottomCenters
+> wallThickness
+> boxHoleWidth
+> baseThickness
+> rodHoleBottomXs
+>  =
+> map
+>  (\x->
+>   (x,
+>    wallThickness + (boxHoleWidth/2),
+>    baseThickness))
+>  rodHoleBottomXs
+
+>pinHoleBottomCenters
+> rodHoleBottomCenters
+>  =
+> map
+>  (*(1,1,0))
+>  rodHoleBottomCenters
+
+
+>rodHoleBottomXs
+> lengthWiseHoleSpacing
+> wallThickness
+> boxHoleLength
+> numSolenoids
+>  =
+> map
+>  (\n ->
+>   lengthWiseHoleSpacing*n +
+>   wallThickness +
+>   boxHoleLength/2)
+>  [0..numSolenoids-1]
+
+>rodDiameter = 6.3
+
+>rodRadius
+> rodDiameter
+>  =
+> rodDiameter/2
+
+>pinHoleDiameter = 4.5
+
+>pinHoleRadius
+> pinHoleDiameter
+>  =
+> pinHoleDiameter/2
+
+
+
+>rodHole
+> rodRadius
+> rodWiggleRoom
+> rodHoleDepth
+>    \
+> thisRodHoleBottomCenter
+>  =
+> translate
+>  thisRodHoleBottomCenter
+>  (cylinder
+>    (rodRadius+
+>     rodWiggleRoom)
+>    rodHoleDepth)
+
+>pinHole
+> pinHoleRadius
+> boxHoleTopRise
+>    \
+> thisPinHoleBottomCenter
+>  =
+> translate
+>  thisPinHoleBottomCenter
+>  (cylinder
+>    pinHoleRadius
+>    boxHoleTopRise)
+
+>rodHoles
+> rodHole
+> rodHoleBottomCenters
+>  =
+> map
+>  rodHole
+>  rodHoleBottomCenters
+
+>pinHoles
+> pinHole
+> pinHoleBottomCenters
+>  =
+> map
+>  pinHole
+>  pinHoleBottomCenters
+
+
+
+>rodWiggleRoom = 1.5
+
+>rodHoleDepth = 15
+
+>boxHoleBottomCenter
+> rodHoleDepth
+>  \
+> thisRodHoleBottomCenter
+>  =
+> thisRodHoleBottomCenter+
+> (0,0,rodHoleDepth)
+
+-------------------------------------
+Wiring
+
+-------------------------------------
+
+Electric screw holes:
+
+
+Electric screw holes.
+
+>electricScrewHeadDiameter
+>  =
+> 7.7
+
+>electricScrewHeadRadius
+> electricScrewHeadDiameter
+>  =
+> electricScrewHeadDiameter/2
+
+>electricScrewBodyDiameter
+>  =
+> 3.84
+
+>electricScrewBodyRadius
+> electricScrewBodyDiameter
+>  =
+> electricScrewBodyDiameter/2
+
+>nutFlatDiameter
+>  =
+> 7
+
+>nutHoles
+> nutHole
+> screwHoleCenters
+>  =
+> map
+>  nutHole
+>  screwHoleCenters
+
+>nutHole
+> nutFlatDiameter
+> nutHoleWidth
+> nutHoleHeight
+> nutHoleDisplacement
+> screwHoleRise
+> nutWiggleRoom
+>   \
+> screwHoleCenter
+>  =
+> translate
+>  (screwHoleCenter +
+>   ((-(nutFlatDiameter/2)),
+>    nutHoleDisplacement,
+>    -screwHoleRise)) $
+>  rect3R
+>   0
+>   (0,0,0)
+>   (nutFlatDiameter+nutWiggleRoom
+>   ,nutHoleWidth
+>   ,nutHoleHeight)
+
+>nutWidth
+>  =
+> 3.16
+
+>nutWiggleRoom
+>  =
+> 0.4
+
+>nutHoleWall
+>  =
+> 4
+
+>nutHoleWidth
+> nutWidth
+> nutWiggleRoom
+>  =
+> 2*(nutWidth+nutWiggleRoom)
+
+>nutHoleHeight
+> nutFlatDiameter
+> screwHoleRise
+>  =
+> nutFlatDiameter/2+screwHoleRise+1
+
+>screwHeadHole
+> screwHeadHoleWidth
+> electricScrewHeadRadius
+>   \
+> screwHoleCenter
+>  =
+> translate (screwHoleCenter -
+>              (0,0,electricScrewHeadRadius)) $
+> rotate3 (0,0,90) $
+>   cylinder
+>    electricScrewHeadRadius
+>    screwHeadHoleWidth
+
+This is the distance above the ground that the screw holes are centered.
+
+>screwHoleRise
+> nutFlatDiameter
+>  =
+> (nutFlatDiameter/2)
+>      +
+> 7
+
+>screwHoleCenters
+> chassiLength
+> screwHoleRise
+> rodHoleBottomXs
+> inverse
+>  =
+> map
+>  (\len->
+>    (len,
+>     0,
+>     screwHoleRise))
+>  (inverse rodHoleBottomXs)
+
+>outerElectricScrewHoles
+> screwHoleCenters
+> outerElectricScrewHole
+>  =
+> map
+>  outerElectricScrewHole
+>  screwHoleCenters
+
+>innerElectricScrewHoles
+> screwHoleCenters
+> innerElectricScrewHole
+>  =
+> map
+>  innerElectricScrewHole
+>  screwHoleCenters
+
+------------------
+Wiring
+
+>solenoidWireDiameter
+>  =
+> 1.5
+
+>solenoidWireRadius
+> solenoidWireDiameter
+>  =
+> solenoidWireDiameter/2
+
+-----------------------
+Source wires
+
+>solenoidWireBendCenters
+> boxHoleBottomCenters
+> solenoidWireBendCenter
+>  =
+> map
+>  solenoidWireBendCenter
+>  boxHoleBottomCenters
+
+>solenoidWirePipeDiameter
+> solenoidWireDiameter
+> solenoidWireWiggleRoom
+>  =
+> solenoidWireDiameter +
+> 2*solenoidWireWiggleRoom
+
+>solenoidWireBendCenter
+> boxHoleWidth
+> solenoidWirePipeDiameter
+> radius
+>  \
+> boxCenter
+>  =
+> boxCenter+
+> (0,
+>  boxHoleWidth/2+
+>  radius solenoidWirePipeDiameter,
+>  0)
+
+>outerSolenoidWireHoles
+> solenoidWireHolesAboveBend
+> outerSolenoidWireHolesBelowBend
+>  =
+> solenoidWireHolesAboveBend ++
+> outerSolenoidWireHolesBelowBend
+
+>innerSolenoidWireHoles
+> solenoidWireHolesAboveBend
+> innerSolenoidWireHolesBelowBend
+>  =
+> solenoidWireHolesAboveBend ++
+> innerSolenoidWireHolesBelowBend
+
+>solenoidWireHolesAboveBend
+> solenoidWireBendCenters
+> solenoidWireHoleAboveBend
+>  =
+> map
+>  solenoidWireHoleAboveBend
+>  solenoidWireBendCenters
+
+>solenoidWireHoleAboveBend
+> solenoidWireDiameter
+> solenoidWireRadius
+> boxHoleHeight
+>  \
+> wireHoleCenter
+>  =
+> translate
+>  (wireHoleCenter-
+>   (solenoidWireRadius,
+>    solenoidWireRadius,
+>    0)) $
+> rect3R
+>  0
+>  (0,0,0)
+>  (solenoidWireDiameter,
+>   solenoidWireDiameter,
+>   boxHoleHeight)
+
+>solenoidWireWiggleRoom
+>  =
+> 0.2
+
+>outerSolenoidWireHolesBelowBend
+> solenoidWireBendCenters
+> screwHoleCenters
+> outerSolenoidWireHoleBelowBend
+>  =
+> map
+>  outerSolenoidWireHoleBelowBend $
+> zip
+>  solenoidWireBendCenters $
+>  tail screwHoleCenters
+
+>innerSolenoidWireHolesBelowBend
+> solenoidWireBendCenters
+> screwHoleCenters
+> innerSolenoidWireHoleBelowBend
+>  =
+> map
+>  innerSolenoidWireHoleBelowBend
+>  solenoidWireBendCenters
+
+------------------
+inner wires from nuts
+
+>innerWiresFromNuts
+> screwHoleCenters
+> innerWireFromNut
+>  =
+> map
+>  innerWireFromNut
+>  screwHoleCenters
+
+>innerWireFromNut
+> nutHoleDisplacement
+> solenoidWirePipeDiameter
+> chassiWidth
+> squarePipe
+> nutFlatDiameter
+>  \
+> screwHoleCenter
+>  =
+> translate
+>  (screwHoleCenter +
+>  (0
+>  ,nutHoleDisplacement
+>  ,nutFlatDiameter/2)) $
+> squarePipe
+>  (0
+>  ,chassiWidth
+>  ,0)
+>  solenoidWirePipeDiameter
+>  200
+
+------------------
+ground wires
+
+>groundWireBottomCenters
+> solenoidWireBendCenters
+> solenoidWireDiameter
+>  =
+> map
+>  (\(cx,cy,cz)->
+>   (cx-(3*solenoidWireDiameter),
+>    cy,
+>    0))
+>  solenoidWireBendCenters
+
+>groundWireCavities
+> groundWireMain
+> groundWireHolesDown
+> groundWireJoinToGroundNut
+>  =
+> groundWireMain :
+> groundWireJoinToGroundNut :
+> groundWireHolesDown
+
+>groundWireJoinToGroundNut
+> solenoidWirePipeDiameter
+> groundWireBottomCenters
+> screwHoleCenters
+> screwHeadHoleWidth
+> screwHoleRise
+> radius
+> squarePipe
+> nutHoleDisplacement
+>  =
+> let
+>  start =
+>   (head screwHoleCenters) +
+>   (0
+>   ,nutHoleDisplacement
+>   ,-screwHoleRise)
+>  end = head groundWireBottomCenters
+> in
+> translate
+>  start $
+> squarePipe
+>  (end-start)
+>  (solenoidWirePipeDiameter+0.2)
+>  20
+
+>groundWireMain
+> solenoidWirePipeDiameter
+> groundWireBottomCenters
+> radius
+>  =
+> let
+>  start =
+>   (head groundWireBottomCenters)
+>  end =
+>   (last groundWireBottomCenters) +
+>   (solenoidWirePipeDiameter,
+>    solenoidWirePipeDiameter,
+>    solenoidWirePipeDiameter)
+> in
+> translate
+>  start $
+> rect3R
+>  0
+>  (0,0,0)
+>  (end-start)
+
+>groundWireHolesDown
+> groundWireBottomCenters
+> solenoidWirePipeDiameter
+> chassiBottomHeight
+> radius
+>  =
+> map
+>  (\center->
+>   translate
+>    (center -
+>    (radius solenoidWirePipeDiameter,
+>     radius solenoidWirePipeDiameter,
+>     0)) $
+>    rect3R
+>     0
+>     (0,0,0)
+>     (solenoidWirePipeDiameter,
+>      solenoidWirePipeDiameter,
+>      chassiBottomHeight))
+>  groundWireBottomCenters
+
+------------------
+Utility functions
+
+>squarePipe
+>    \
+> (x,y,z)
+> diameter
+> precision
+>  =
+> union $
+> map
+>  (\start->
+>    translate
+>     start
+>     (rect3R 0 (0,0,0) (diameter,diameter,diameter))) $
+> zip3
+>  (map (\n->(n/precision)*x) [0..precision])
+>  (map (\n->(n/precision)*y) [0..precision])
+>  (map (\n->(n/precision)*z) [0..precision])
+
+>inverse \ l =
+> inverse' l 0
+> where
+>  inverse' (x:y:z:s) _ =
+>   let d = y-x in
+>    (x-(d/2)) :
+>    x+(d/2)   :
+>    y + (d/2) :
+>    (inverse' (z : s) d)
+>  inverse' (z:[])   d = [z+d/2]
+>  inverse' (x:y:[]) _ =
+>   let d = y-x in
+>    [x+d/2,y+d/2]
+
+>radius
+>  \
+> diameter
+>  =
+> diameter/2
+
+-------------------------------
+Outer nut holes
+
+>nutHoleDisplacement
+> screwHeadHoleWidth
+> nutHoleWall
+>  =
+> screwHeadHoleWidth +
+> nutHoleWall
+
+>outerElectricScrewHole
+> screwHeadHole
+> outerScrewBodyHole
+> nutHole
+>   \
+> screwHoleCenter
+>  =
+> union
+>  [screwHeadHole screwHoleCenter,
+>   nutHole screwHoleCenter,
+>   outerScrewBodyHole screwHoleCenter]
+
+>innerElectricScrewHole
+> innerScrewBodyHole
+> nutHole
+>   \
+> screwHoleCenter
+>  =
+> union
+>  [nutHole screwHoleCenter,
+>   innerScrewBodyHole screwHoleCenter]
+
+>outerScrewBodyHole
+> nutHoleWidth
+> electricScrewBodyDiameter
+> chassiWidth
+> screwHeadHoleWidth
+>  \
+> screwHoleCenter
+>  =
+> translate
+>  (screwHoleCenter + (0,
+>   screwHeadHoleWidth,
+>   -electricScrewBodyDiameter)) $
+> rotate3 (0,0,90) $
+> cylinder
+>  (electricScrewBodyDiameter/2)
+>  ((chassiWidth+1)-screwHeadHoleWidth)
+
+>innerScrewBodyHole
+> nutHoleWidth
+> electricScrewBodyDiameter
+> chassiWidth
+> nutHoleWall
+>  \
+> screwHoleCenter
+>  =
+> translate
+>  (screwHoleCenter +
+>   (0
+>   ,0
+>   ,-electricScrewBodyDiameter)) $
+> rotate3 (0,0,90) $
+> cylinder
+>  (electricScrewBodyDiameter/2)
+>  (chassiWidth-nutHoleWall)
+
+>screwHeadHoleWidth
+> chassiWidth
+> nutHoleWall
+> nutHoleWidth
+>  =
+> chassiWidth -
+> (2*nutHoleWall+
+>  nutHoleWidth)
+
+>outerSolenoidWireHoleBelowBend
+> solenoidWirePipeDiameter
+> squarePipe
+> nutHoleDisplacement
+>  \
+> (solenoidWireBendCenter,
+>  screwHoleCenter)
+>  =
+> translate
+>   (screwHoleCenter+
+>   (0,nutHoleDisplacement,0)) $
+> squarePipe
+>  ((solenoidWireBendCenter-
+>   (screwHoleCenter+
+>   (0,nutHoleDisplacement,0))) * (1.1,1.1,1.1))
+>  solenoidWirePipeDiameter
+>  100
+
+>innerSolenoidWireHoleBelowBend
+> solenoidWirePipeDiameter
+> squarePipe
+> nutHoleDisplacement
+> chassiWidth
+> nutHoleHeight
+>  \
+> solenoidWireBendCenter
+>  =
+> let
+>  (solenoidWireBendX,_,_) = solenoidWireBendCenter
+> in
+> translate
+>   (solenoidWireBendX
+>   ,chassiWidth-1
+>   ,nutHoleHeight+1) $
+> squarePipe
+>  (solenoidWireBendCenter-
+>   (solenoidWireBendX
+>   ,chassiWidth+1
+>   ,nutHoleHeight))
+>  solenoidWirePipeDiameter
+>  40
+
+>exit << return $ return ()
